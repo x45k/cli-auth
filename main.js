@@ -30,7 +30,7 @@ function addKey(label, secret) {
   const data = readData();
   data.push(key);
   saveData(data);
-  console.log(`New 2FA key added for ${label}:`);
+  console.log(`\nNew 2FA key added for ${label}:`);
   const token = speakeasy.totp({
     secret: key.secret,
     encoding: 'base32'
@@ -218,12 +218,16 @@ function searchKeys() {
 
 function showMenu() {
   console.clear();
+  console.log('====================');
+  console.log('    2FA Manager     ');
+  console.log('====================');
   console.log('1. View current 2FA keys');
   console.log('2. Add a new 2FA key');
   console.log('3. Remove a 2FA key');
   console.log('4. Edit a 2FA key');
   console.log('5. Search for a 2FA key');
   console.log('6. Exit');
+  console.log('====================');
 
   rl.question('Select an option: ', (choice) => {
     switch (choice) {
