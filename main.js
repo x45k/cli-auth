@@ -74,11 +74,6 @@ function displayKeys() {
   display(); 
   
   refreshInterval = setInterval(display, 1000);
-  
-  rl.question('\nPress any key to return to the menu...', () => {
-    clearInterval(refreshInterval); 
-    showMenu();
-  });
 }
 
 function promptForKey() {
