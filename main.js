@@ -46,6 +46,30 @@ function removeKey(index) {
   console.log(`Removed 2FA key: ${removedKey[0].label}`);
 }
 
+function editKey(index) {
+  const data = readData();
+  if (index < 0 || index >= data.length) {
+    console.log('Invalid key selection.');
+    return;
+  }
+
+  rl.question('Enter the new label for the key (leave empty to keep current): ', (newLabel) => {
+    if (newLabel) {
+      data[index].label = newLabel;
+    }
+
+    rl.question('Enter the new 2FA secret (leave empty to keep current): ', (newSecret) => {
+      if (newSecret) {
+        data[index].secret = newSecret.replace(/\s+/g, '');
+      }
+
+      saveData(data);
+      console.log(`Key updated: ${data[index].label}`);
+      showMenu();
+    });
+  });
+}
+
 let refreshInterval;
 
 function displayKeys() {
@@ -131,12 +155,36 @@ function promptForKeyRemoval() {
   });
 }
 
+function promptForKeyEdit() {
+  const data = readData();
+  if (data.length === 0) {
+    console.log('No keys to edit.');
+    showMenu();
+    return;
+  }
+
+  console.log('\nSelect a key to edit:');
+  data.forEach((key, index) => {
+    console.log(`${index + 1}. ${key.label}`);
+  });
+
+  rl.question('Enter the number of the key to edit: ', (choice) => {
+    const index = parseInt(choice) - 1;
+    if (isNaN(index) || index < 0 || index >= data.length) {
+      console.log('Invalid selection.');
+    } else {
+      editKey(index);  
+    }
+  });
+}
+
 function showMenu() {
   console.clear();
   console.log('1. View current 2FA keys');
   console.log('2. Add a new 2FA key');
   console.log('3. Remove a 2FA key');
-  console.log('4. Exit');
+  console.log('4. Edit a 2FA key');
+  console.log('5. Exit');
 
   rl.question('Select an option: ', (choice) => {
     switch (choice) {
@@ -150,6 +198,9 @@ function showMenu() {
         promptForKeyRemoval(); 
         break;
       case '4':
+        promptForKeyEdit();
+        break;
+      case '5':
         rl.close();
         process.exit();
         break;
