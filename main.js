@@ -25,7 +25,7 @@ function saveData(data) {
 function addKey(label, secret) {
   const key = {
     label,
-    secret: secret.replace(/\s+/g, '')
+    secret: secret.replace(/\s+/g, '') 
   };
   const data = readData();
   data.push(key);
@@ -40,11 +40,13 @@ function removeKey(index) {
     console.log('Invalid key selection.');
     return;
   }
-
+  
   const removedKey = data.splice(index, 1);
   saveData(data);
   console.log(`Removed 2FA key: ${removedKey[0].label}`);
 }
+
+let refreshInterval;
 
 function displayKeys() {
   const data = readData();
@@ -54,20 +56,27 @@ function displayKeys() {
     return;
   }
 
-  console.clear();
+  const display = () => {
+    console.clear();  
 
-  data.forEach((key, index) => {
-    const token = speakeasy.totp({
-      secret: key.secret,
-      encoding: 'base32'
+    data.forEach((key, index) => {
+      const token = speakeasy.totp({
+        secret: key.secret,
+        encoding: 'base32'
+      });
+      const expirationTime = 30 - Math.floor((Date.now() / 1000) % 30);
+      console.log(`\nKey ${index + 1}: ${key.label}`);
+      console.log(`Current OTP: ${token}`);
+      console.log(`Next refresh in: ${expirationTime}s`);
     });
-    const expirationTime = 30 - Math.floor((Date.now() / 1000) % 30);
-    console.log(`\nKey ${index + 1}: ${key.label}`);
-    console.log(`Current OTP: ${token}`);
-    console.log(`Next refresh in: ${expirationTime}s`);
-  });
+  };
 
+  display(); 
+  
+  refreshInterval = setInterval(display, 1000);
+  
   rl.question('\nPress any key to return to the menu...', () => {
+    clearInterval(refreshInterval); 
     showMenu();
   });
 }
@@ -87,8 +96,9 @@ function promptForKey() {
         return;
       }
 
+      
       addKey(label, secret);
-      showMenu();
+      showMenu(); 
     });
   });
 }
@@ -111,9 +121,9 @@ function promptForKeyRemoval() {
     if (isNaN(index) || index < 0 || index >= data.length) {
       console.log('Invalid selection.');
     } else {
-      removeKey(index);
+      removeKey(index);  
     }
-    showMenu();
+    showMenu(); 
   });
 }
 
@@ -127,13 +137,13 @@ function showMenu() {
   rl.question('Select an option: ', (choice) => {
     switch (choice) {
       case '1':
-        displayKeys();
+        displayKeys(); 
         break;
       case '2':
-        promptForKey();
+        promptForKey(); 
         break;
       case '3':
-        promptForKeyRemoval();
+        promptForKeyRemoval(); 
         break;
       case '4':
         rl.close();
