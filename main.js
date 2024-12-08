@@ -74,6 +74,16 @@ function displayKeys() {
   display(); 
   
   refreshInterval = setInterval(display, 1000);
+
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  process.stdin.on('data', (key) => {
+    if (key.toString() === '\u001b') {
+      clearInterval(refreshInterval);  
+      console.clear();
+      showMenu();  
+    }
+  });
 }
 
 function promptForKey() {
@@ -91,7 +101,6 @@ function promptForKey() {
         return;
       }
 
-      
       addKey(label, secret);
       showMenu(); 
     });
@@ -150,6 +159,15 @@ function showMenu() {
     }
   });
 }
+
+process.stdin.setRawMode(true);
+process.stdin.resume();
+process.stdin.on('data', (key) => {
+  if (key.toString() === '\u001b') { 
+    console.clear();
+    showMenu();
+  }
+});
 
 console.log('2FA Manager');
 showMenu();
