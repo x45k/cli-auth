@@ -25,13 +25,17 @@ function saveData(data) {
 function addKey(label, secret) {
   const key = {
     label,
-    secret: secret.replace(/\s+/g, '') 
+    secret: secret.replace(/\s+/g, '')
   };
   const data = readData();
   data.push(key);
   saveData(data);
   console.log(`New 2FA key added for ${label}:`);
-  console.log(`Secret: ${key.secret}`);
+  const token = speakeasy.totp({
+    secret: key.secret,
+    encoding: 'base32'
+  });
+  console.log(`Current OTP: ${token}`);
 }
 
 function removeKey(index) {
@@ -40,7 +44,7 @@ function removeKey(index) {
     console.log('Invalid key selection.');
     return;
   }
-  
+
   const removedKey = data.splice(index, 1);
   saveData(data);
   console.log(`Removed 2FA key: ${removedKey[0].label}`);
@@ -81,7 +85,7 @@ function displayKeys() {
   }
 
   const display = () => {
-    console.clear();  
+    console.clear();
 
     data.forEach((key, index) => {
       const token = speakeasy.totp({
@@ -95,17 +99,17 @@ function displayKeys() {
     });
   };
 
-  display(); 
-  
+  display();
+
   refreshInterval = setInterval(display, 1000);
 
   process.stdin.setRawMode(true);
   process.stdin.resume();
   process.stdin.on('data', (key) => {
     if (key.toString() === '\u001b') {
-      clearInterval(refreshInterval);  
+      clearInterval(refreshInterval);
       console.clear();
-      showMenu();  
+      showMenu();
     }
   });
 }
@@ -126,7 +130,7 @@ function promptForKey() {
       }
 
       addKey(label, secret);
-      showMenu(); 
+      showMenu();
     });
   });
 }
@@ -149,9 +153,9 @@ function promptForKeyRemoval() {
     if (isNaN(index) || index < 0 || index >= data.length) {
       console.log('Invalid selection.');
     } else {
-      removeKey(index);  
+      removeKey(index);
     }
-    showMenu(); 
+    showMenu();
   });
 }
 
@@ -173,8 +177,42 @@ function promptForKeyEdit() {
     if (isNaN(index) || index < 0 || index >= data.length) {
       console.log('Invalid selection.');
     } else {
-      editKey(index);  
+      editKey(index);
     }
+  });
+}
+
+function searchKeys() {
+  rl.question('Enter a label to search for: ', (searchTerm) => {
+    if (!searchTerm) {
+      console.log('Search term cannot be empty.');
+      showMenu();
+      return;
+    }
+
+    const data = readData();
+    const filteredKeys = data.filter(key => key.label.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (filteredKeys.length === 0) {
+      console.log('No matching keys found.');
+    } else {
+      console.log('Matching keys found:');
+      filteredKeys.forEach((key, index) => {
+        const token = speakeasy.totp({
+          secret: key.secret,
+          encoding: 'base32'
+        });
+        console.log(`${index + 1}. Label: ${key.label}`);
+        console.log(`   Current OTP: ${token}`);
+      });
+    }
+
+    console.log('\nPress Esc to return to the menu...');
+    rl.input.on('keypress', (char, key) => {
+      if (key.name === 'escape') {
+        showMenu();
+      }
+    });
   });
 }
 
@@ -184,23 +222,27 @@ function showMenu() {
   console.log('2. Add a new 2FA key');
   console.log('3. Remove a 2FA key');
   console.log('4. Edit a 2FA key');
-  console.log('5. Exit');
+  console.log('5. Search for a 2FA key');
+  console.log('6. Exit');
 
   rl.question('Select an option: ', (choice) => {
     switch (choice) {
       case '1':
-        displayKeys(); 
+        displayKeys();
         break;
       case '2':
-        promptForKey(); 
+        promptForKey();
         break;
       case '3':
-        promptForKeyRemoval(); 
+        promptForKeyRemoval();
         break;
       case '4':
         promptForKeyEdit();
         break;
       case '5':
+        searchKeys();
+        break;
+      case '6':
         rl.close();
         process.exit();
         break;
@@ -210,15 +252,6 @@ function showMenu() {
     }
   });
 }
-
-process.stdin.setRawMode(true);
-process.stdin.resume();
-process.stdin.on('data', (key) => {
-  if (key.toString() === '\u001b') { 
-    console.clear();
-    showMenu();
-  }
-});
 
 console.log('2FA Manager');
 showMenu();
